@@ -1,0 +1,35 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[requires]
+python_version = "3.7"
+
+[packages]
+flask = "*"
+peewee = "*"
+flask-jwt-extended = "*"
+flask-cors = "*"
+validators = "*"
+pytz = "*"
+requests = "*"
+kubernetes = "*"
+gunicorn = "*"
+flask-restx = "*"
+python-dateutil = "*"
+pymysql = "*"
+
+[dev-packages]
+isort = "*"
+autoflake = "*"
+pip = "*"
+black = "==19.3b0"
+
+[scripts]
+format = "sh -c \"autoflake -i --remove-all-unused-imports --remove-unused-variables -r .; isort --recursive --force-single-line .; black -l 110 -t py37 .;\""
+config = "sh -c \"terraform output > config.env\""
+freeze = "sh -c \"pipenv lock -r > requirements.txt\""
+server = "flask run --reload --debugger"
+cron   = "python cron.py"
+deploy = "gcloud -q app deploy"
