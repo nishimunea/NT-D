@@ -66,7 +66,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['setToken', 'setStatus', 'setToken']),
+    ...mapActions(['setStatus', 'setToken']),
     async doAuthenticate() {
       this.errorMessage = '';
       const resp = await this.$http.post('/session/', { password: this.password }).catch(() => {

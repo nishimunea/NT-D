@@ -35,7 +35,7 @@ export default {
       httpClient.interceptors.response.use(
         (response) => {
           if (response.status === 401) {
-            // POST `/session/` allowes to handle unauthorized errors by request initiators
+            // POST `/session/` allows to handle unauthorized errors by request initiators
             const responseURL = new URL(response.request.responseURL);
             const responsePath = responseURL.pathname;
             if (responsePath === '/session/' && response.config.method === 'post') {
