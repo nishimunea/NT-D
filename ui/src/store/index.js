@@ -16,7 +16,7 @@ export default new Vuex.Store({
     currentAuditUUID: '',
     currentScan: {},
     isPolicyAccepted: Boolean(localStorage.getItem(policyAccepted) === 'true'),
-    isShownScanResultDrawer: false,
+    isShownScanStatusDrawer: false,
     sourceIpAddress: process.env.VUE_APP_SOURCE_IP_ADDRESS,
     status: 0,
     snackbar: { message: '', isError: false },
@@ -36,8 +36,8 @@ export default new Vuex.Store({
     setIsPolicyAccepted(state, isAccepted) {
       state.isPolicyAccepted = isAccepted;
     },
-    setIsShownScanResultDrawer(state, isShown) {
-      state.isShownScanResultDrawer = isShown;
+    setIsShownScanStatusDrawer(state, isShown) {
+      state.isShownScanStatusDrawer = isShown;
     },
     setStatus(state, status) {
       state.status = status;
@@ -74,8 +74,8 @@ export default new Vuex.Store({
       localStorage.setItem(policyAccepted, String(isAccepted));
       commit('setIsPolicyAccepted', isAccepted);
     },
-    setIsShownScanResultDrawer({ commit }, isShown) {
-      commit('setIsShownScanResultDrawer', isShown);
+    setIsShownScanStatusDrawer({ commit }, isShown) {
+      commit('setIsShownScanStatusDrawer', isShown);
     },
     setStatus({ commit }, status) {
       commit('setStatus', parseInt(status, 10));

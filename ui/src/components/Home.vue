@@ -75,9 +75,9 @@ export default {
   },
 
   methods: {
-    ...mapActions(['setIsShownScanResultDrawer', 'setSnackbar']),
+    ...mapActions(['setIsShownScanStatusDrawer', 'setSnackbar']),
     closeDrawers() {
-      this.setIsShownScanResultDrawer(false);
+      this.setIsShownScanStatusDrawer(false);
     },
   },
 

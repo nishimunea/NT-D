@@ -150,7 +150,7 @@
     </v-card>
 
     <div @click.stop>
-      <ScanResultDrawer />
+      <ScanStatusDrawer />
     </div>
 
     <CautionDialog v-model="isShownCaution" />
@@ -163,7 +163,7 @@ import { mapState, mapActions } from 'vuex';
 import CautionDialog from '@/components/CautionDialog.vue';
 import ListSearchBox from '@/components/ListSearchBox.vue';
 import ScanRegistrationDialog from '@/components/ScanRegistrationDialog.vue';
-import ScanResultDrawer from '@/components/ScanResultDrawer.vue';
+import ScanStatusDrawer from '@/components/ScanStatusDrawer.vue';
 import ScanScheduleDialog from '@/components/ScanScheduleDialog.vue';
 
 export default {
@@ -173,7 +173,7 @@ export default {
     CautionDialog,
     ListSearchBox,
     ScanRegistrationDialog,
-    ScanResultDrawer,
+    ScanStatusDrawer,
     ScanScheduleDialog,
   },
 
@@ -186,7 +186,7 @@ export default {
       'updateScan',
       'setAudit',
       'setCurrentScan',
-      'setIsShownScanResultDrawer',
+      'setIsShownScanStatusDrawer',
       'setStatus',
       'setSnackbar',
     ]),
@@ -216,12 +216,12 @@ export default {
       if (this.$helper.scanStatus(scan) === 'Unscheduled') {
         this.openScheduleDialog(scan);
       } else {
-        this.openScanResultDrawer(scan);
+        this.openScanStatusDrawer(scan);
       }
     },
-    openScanResultDrawer(scan) {
+    openScanStatusDrawer(scan) {
       this.setCurrentScan(scan);
-      this.setIsShownScanResultDrawer(true);
+      this.setIsShownScanStatusDrawer(true);
     },
     openScheduleDialog(scan) {
       this.setCurrentScan(scan);

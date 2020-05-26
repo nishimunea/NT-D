@@ -1,5 +1,5 @@
 <template>
-  <v-navigation-drawer :value="isShownScanResultDrawer" fixed hide-overlay stateless right width="512">
+  <v-navigation-drawer :value="isShownScanStatusDrawer" fixed hide-overlay stateless right width="512">
     <v-list two-line flat disabled>
       <!-- Scan Name -->
       <v-list-item>
@@ -131,7 +131,7 @@
     <!-- If Completed -->
     <div v-if="getCurrentStatus() === 'Completed'">
       <v-divider />
-      <v-progress-linear v-if="isScanResultLoading" indeterminate></v-progress-linear>
+      <v-progress-linear v-if="isScanStatusLoading" indeterminate></v-progress-linear>
       <v-subheader class="overline">Results</v-subheader>
       <v-list-item>
         <v-list-item-content class="my-0 py-0">
@@ -198,19 +198,19 @@ import colors from 'vuetify/lib/util/colors';
 import { mapState, mapActions } from 'vuex';
 
 export default {
-  name: 'ScanResultDrawer',
+  name: 'ScanStatusDrawer',
 
   watch: {
     currentScan: {
       handler(scan) {
-        if (this.isShownScanResultDrawer && this.getCurrentStatus() === 'Completed' && !scan.results) {
+        if (this.isShownScanStatusDrawer && this.getCurrentStatus() === 'Completed' && !scan.results) {
           // Load scan results when opened
-          this.getScanResult();
+          this.getScanStatus();
         }
       },
       deep: true,
     },
-    isShownScanResultDrawer: {
+    isShownScanStatusDrawer: {
       handler(isOpen) {
         if (this.timer) {
           clearInterval(this.timer);
@@ -218,7 +218,7 @@ export default {
         if (isOpen) {
           this.timer = setInterval(() => {
             if (['Scheduled', 'Scanning'].indexOf(this.getCurrentStatus()) >= 0) {
-              this.getScanResult();
+              this.getScanStatus();
             }
           }, this.reloadInterval);
         }
@@ -227,7 +227,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['currentScan', 'isShownScanResultDrawer', 'sourceIpAddress', '$http']),
+    ...mapState(['currentScan', 'isShownScanStatusDrawer', 'sourceIpAddress', '$http']),
     filteredResults() {
       const results = this.currentScan.results ? this.currentScan.results : [];
       return results.filter((result) => this.selectedSeverities.indexOf(result.severity) >= 0);
@@ -236,14 +236,14 @@ export default {
 
   methods: {
     ...mapActions(['setCurrentScan', 'updateScan']),
-    async getScanResult() {
-      this.isScanResultLoading = true;
+    async getScanStatus() {
+      this.isScanStatusLoading = true;
       const resp = await this.$http.get(`/scan/${this.currentScan.uuid}/`).catch(() => {
         this.isError = true;
       });
       switch (resp.status) {
         case 200: {
-          this.isScanResultLoading = false;
+          this.isScanStatusLoading = false;
           if (this.currentScan.uuid === resp.data.uuid) {
             this.setCurrentScan(resp.data);
             this.updateScan(resp.data);
@@ -285,7 +285,7 @@ export default {
   },
 
   data: () => ({
-    isScanResultLoading: false,
+    isScanStatusLoading: false,
     selectedSeverities: ['High', 'Medium'],
     severities: ['High', 'Medium', 'Low', 'Info'],
     reloadInterval: Number(process.env.VUE_APP_SCAN_RELOAD_INTERVAL),
