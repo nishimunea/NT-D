@@ -1,4 +1,4 @@
-service: rem
+service: default
 runtime: python37
 entrypoint: gunicorn -b :$PORT -t 90 app:app
 

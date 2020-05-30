@@ -26,6 +26,7 @@ npm run serve
 
 * Use `password` for the administrator login.
 
+
 ## Disclaimer
 
 We impose restrictions on your use of this tool. You are prohibited from attempting to interfere with any networks or hosts you are not authorized to access. You must first secure written authorization from owner of your target before initiating any scanning. It is to be understood that we shall not be held responsible for any damage incurred as a result of scanning by this tool.

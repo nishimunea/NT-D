@@ -28,7 +28,7 @@ black = "==19.3b0"
 
 [scripts]
 format = "sh -c \"autoflake -i --remove-all-unused-imports --remove-unused-variables -r .; isort --recursive --force-single-line .; black -l 110 -t py37 .;\""
-config = "sh -c \"terraform output > config.env\""
+config = "sh -c \"terraform output -state=../terraform/terraform.tfstate > config.env\""
 freeze = "sh -c \"pipenv lock -r > requirements.txt\""
 server = "flask run --reload --debugger"
 cron   = "python cron.py"
