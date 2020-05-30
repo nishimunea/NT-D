@@ -2,8 +2,8 @@ output "DB_NAME" {
   value = "${google_sql_database.db.name}"
 }
 
-output "DB_HOST" {
-  value = "${google_sql_database_instance.instance.private_ip_address}"
+output "DB_INSTANCE_NAME" {
+  value = "${google_sql_database_instance.instance.connection_name}"
 }
 
 output "DB_USER" {

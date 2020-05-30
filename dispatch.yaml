@@ -1,0 +1,19 @@
+dispatch:
+  - url: "*/audit/*"
+    service: default
+
+  - url: "*/detector/*"
+    service: default
+
+  - url: "*/scan/*"
+    service: default
+
+  - url: "*/session/*"
+    service: default
+
+  - url: "*/task/*"
+    service: default
+
+
+  - url: "*/*"
+    service: ui

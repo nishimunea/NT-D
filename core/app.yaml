@@ -6,3 +6,8 @@ env_variables:
   ADMIN_PASSWORD: 'password'
   CONFIG_ENV_FILE_PATH: 'config.env'
   JWT_SECRET_KEY: 'your-256-bit-secret'
+
+handlers:
+- url: /(.*)
+  script: auto
+  secure: always

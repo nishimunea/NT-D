@@ -48,12 +48,11 @@ formatter = FormatterJSON(
 )
 
 logging.basicConfig(level=logging.INFO)
-# logging.getLogger().handlers[0].setFormatter(formatter)
 
 app = Flask(__name__)
 
 if Utils.is_gcp():
-    # Use Cloud SQL for Google Cloud Platform
+    logging.getLogger().handlers[0].setFormatter(formatter)
     config_file_path = os.getenv("CONFIG_ENV_FILE_PATH", "config.env")
     Utils.load_env_from_config_file(config_file_path)
     app.config["DATABASE"] = MySQLDatabase(
@@ -63,15 +62,14 @@ if Utils.is_gcp():
         password=os.environ["DB_PASSWORD"],
     )
 else:
-    # Use MySQL official docker image for local environment
+
     app.config["DATABASE"] = MySQLDatabase(
         os.getenv("DB_NAME", "ntd"),
         user=os.getenv("DB_USER", "root"),
         password=os.getenv("DB_PASSWORD", "Passw0rd!"),
-        host=os.getenv("DB_ENDPOINT", "127.0.0.1"),
+        host=os.getenv("DB_HOST", "127.0.0.1"),
         port=int(os.getenv("DB_PORT", "3306")),
     )
-
 
 app.config["ALLOW_ANONYMOUS_AUDIT_ACCESS"] = os.getenv("ALLOW_ANONYMOUS_AUDIT_ACCESS", "True") == "True"
 app.config["ADMIN_NAME"] = os.getenv("ADMIN_NAME", "NT-D ADMIN")
