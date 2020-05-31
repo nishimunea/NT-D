@@ -1,0 +1,16 @@
+cron:
+- description: "Scheduler task"
+  url: /task/schedule/
+  schedule: every 3 minutes
+
+- description: "Pending task"
+  url: /task/pending/
+  schedule: every 3 minutes
+
+- description: "Running task"
+  url: /task/running/
+  schedule: every 3 minutes
+
+- description: "Stopped task"
+  url: /task/stopped/
+  schedule: every 3 minutes

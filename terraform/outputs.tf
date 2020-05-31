@@ -13,3 +13,7 @@ output "DB_USER" {
 output "DB_PASSWORD" {
   value = "${google_sql_user.user.password}"
 }
+
+output "GKE_MASTER_SERVER" {
+  value = "https://${google_container_cluster.ntd_cluster.endpoint}"
+}
