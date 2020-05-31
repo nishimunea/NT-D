@@ -92,4 +92,13 @@ export default {
 .v-icon.inline {
   padding-bottom: 2pt;
 }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  border: 0px solid transparent;
+  -webkit-text-fill-color: white;
+  -webkit-box-shadow: 0 0 0 1000px #1e1e1e inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
 </style>
