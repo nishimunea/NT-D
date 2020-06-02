@@ -62,7 +62,6 @@ if Utils.is_gcp():
         password=os.environ["DB_PASSWORD"],
     )
 else:
-
     app.config["DATABASE"] = MySQLDatabase(
         os.getenv("DB_NAME", "ntd"),
         user=os.getenv("DB_USER", "root"),

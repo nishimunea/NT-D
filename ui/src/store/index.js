@@ -17,7 +17,6 @@ export default new Vuex.Store({
     currentScan: {},
     isPolicyAccepted: Boolean(localStorage.getItem(policyAccepted) === 'true'),
     isShownScanStatusDrawer: false,
-    sourceIpAddress: process.env.VUE_APP_SOURCE_IP_ADDRESS,
     status: 0,
     snackbar: { message: '', isError: false },
     token: localStorage.getItem(accessTokenKey),

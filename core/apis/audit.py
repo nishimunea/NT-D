@@ -1,4 +1,5 @@
 import csv
+import os
 import secrets
 import tempfile
 import uuid
@@ -40,6 +41,7 @@ AuditGetResponseSchema = api.model(
         "updated_at": fields.DateTime(required=True),
         "created_by": fields.String(required=True),
         "updated_by": fields.String(required=True),
+        "source_ip_address": fields.String(required=True),
         "scans": fields.List(fields.Nested(ScanGetResponseSchema), required=True),
     },
 )
@@ -124,6 +126,7 @@ class AuditItem(Resource):
         """
 
         audit, audit_query = get_audit_by_uuid(audit_uuid)
+        audit["source_ip_address"] = os.getenv("NAT_EGRESS_IP", "127.0.0.1")
         audit["scans"] = audit_query[0].scans.dicts()
         return audit
 

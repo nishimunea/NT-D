@@ -18,6 +18,6 @@ output "GKE_MASTER_SERVER" {
   value = "https://${google_container_cluster.ntd_cluster.endpoint}"
 }
 
-output "SCAN_SOURCE_IP" {
+output "NAT_EGRESS_IP" {
   value = google_compute_address.ntd_egress_ip.address
 }
