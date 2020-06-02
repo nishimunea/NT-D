@@ -1,5 +1,6 @@
 import importlib
 import json
+import logging
 import os
 import sys
 from abc import ABCMeta
@@ -11,6 +12,11 @@ from enum import unique
 import requests
 from kubernetes import config
 from kubernetes.client import Configuration
+
+kslogger = logging.getLogger("kubernetes")
+console_h = logging.StreamHandler()
+kslogger.addHandler(console_h)
+kslogger.setLevel(logging.DEBUG)
 
 
 class DetectorManager:
@@ -48,8 +54,8 @@ class DetectorManager:
     def load_detector(self, module, session):
         try:
             return self.detectors[module](session)
-        except:
-            raise Exception("Detector `{}` could not be loaded".format(module))
+        except Exception as error:
+            raise Exception("Detector `{}` could not be loaded, error={}".format(module, error))
 
 
 @unique
@@ -99,6 +105,7 @@ class GKEConfiguration:
         configuration.api_key_prefix["authorization"] = "Bearer"
         configuration.host = os.environ.get("GKE_MASTER_SERVER")
         configuration.verify_ssl = False
+        configuration.assert_hostname = False
         Configuration.set_default(configuration)
 
 

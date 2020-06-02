@@ -6,9 +6,11 @@ from kubernetes.stream import stream
 
 from detectors import AbstractDetector
 from detectors import DetectionMode
+from detectors import GKEConfiguration
 from detectors import LocalKubernetesConfiguration
 from detectors import ReleaseStage
 from detectors import Severity
+from utils import Utils
 
 
 class Detector(AbstractDetector):
@@ -23,14 +25,18 @@ class Detector(AbstractDetector):
     POD_NAMESPACE = "default"
     CONTAINER_IMAGE = "docker.io/instrumentisto/nmap:7.80"
 
-    CMD_RUN_SCAN_SAFE = "nohup nmap -sV -O -sC -Pn -oX out.xml {target} &"
+    CMD_RUN_SCAN_SAFE = "nohup nmap -sV -O -sC -Pn -oX out.xml {target} > /dev/null 2>&1 &"
     CMD_CHECK_SCAN_STATUS = "ps x | grep nmap | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat out.xml"
 
     def __init__(self, session):
         super().__init__(session)
-        # TODO: Load GKE configuration here
-        LocalKubernetesConfiguration().set_config()
+
+        if Utils.is_gcp():
+            GKEConfiguration().set_config()
+        else:
+            LocalKubernetesConfiguration().set_config()
+
         self.core_api = core_v1_api.CoreV1Api()
 
     def create(self):
@@ -52,13 +58,14 @@ class Detector(AbstractDetector):
                         "name": Detector.POD_NAME_PREFIX,
                         "command": ["sh", "-c", "while true;do date;sleep 5; done"],
                         "resources": {
-                            "requests": {"memory": "512Mi", "cpu": "1"},
+                            "requests": {"memory": "512Mi", "cpu": "0.5"},
                             "limits": {"memory": "1Gi", "cpu": "1"},
                         },
                     }
                 ],
             },
         }
+
         resp = self.core_api.create_namespaced_pod(body=pod_manifest, namespace=Detector.POD_NAMESPACE)
         app.logger.info("Created detector successfully: resp={}".format(resp))
         self.session = {"pod": {"name": pod_name}}
@@ -76,7 +83,6 @@ class Detector(AbstractDetector):
 
     def run(self, target, mode):
         app.logger.info("Try to run scan: target={}, mode={}, session={}".format(target, mode, self.session))
-
         resp = stream(
             self.core_api.connect_get_namespaced_pod_exec,
             self.session["pod"]["name"],
@@ -87,7 +93,6 @@ class Detector(AbstractDetector):
             stdout=True,
             tty=False,
         )
-
         app.logger.info("Run detector successfully: resp={}".format(resp))
         return self.session
 
