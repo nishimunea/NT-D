@@ -4,6 +4,8 @@ import pytz
 from flask import current_app as app
 
 from detectors import dtm
+from integrators import NotificationType
+from integrators import im
 from models import ScanTable
 from models import TaskTable
 from models import db
@@ -31,7 +33,7 @@ class RunningTaskHandler(TaskHandlerBase):
             # Reflect started time to corresponding scan entry
             ScanTable.update({"started_at": self.now}).where(ScanTable.task_uuid == task["uuid"]).execute()
 
-        # TODO: Notify to integrators here
+        im.send(NotificationType.START, task)
         app.logger.info("Enqueued into {} successfully: task={}".format(self.progress, task["uuid"]))
         return
 

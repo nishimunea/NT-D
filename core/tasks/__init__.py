@@ -8,6 +8,8 @@ from flask import current_app as app
 from peewee import JOIN
 
 from detectors import dtm
+from integrators import NotificationType
+from integrators import im
 from models import ScanTable
 from models import TaskTable
 from models import db
@@ -67,7 +69,10 @@ class TaskHandlerBase:
             ScanTable.update({"scheduled_at": None, "task_uuid": None, "error_reason": error_reason}).where(
                 ScanTable.task_uuid == task["uuid"]
             ).execute()
-        # TODO: Notify to integrators here
+
+        if error_reason != "":
+            im.send(NotificationType.ERROR, task)
+
         app.logger.info("Deleted successfully: task={}, error_reason={}".format(task["uuid"], error_reason))
 
     def process(self, task):

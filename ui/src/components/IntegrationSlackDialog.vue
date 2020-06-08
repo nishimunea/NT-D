@@ -6,7 +6,7 @@
       </v-card-title>
       <v-form ref="form" v-model="isFormValid" @submit.prevent="setIntegration">
         <v-card-text>
-          <v-alert v-if="errorMessage" type="error" icon="error" dense text class="mt-3 mb-0">
+          <v-alert v-if="errorMessage" type="error" icon="error" dense text class="mb-5 mt-0">
             {{ errorMessage }}
           </v-alert>
           <v-container class="pb-0">
@@ -22,7 +22,7 @@
                 />
               </v-col>
               <v-col cols="3">
-                <v-select :items="messageLevels" label="Message Level" dense hide-details />
+                <v-select v-model="selected.level" :items="messageLevels" label="Message Level" dense hide-details />
               </v-col>
             </v-row>
           </v-container>
@@ -55,8 +55,8 @@ export default {
       if (isOpen) {
         this.errorMessage = '';
         this.selected = {
-          name: '',
-          description: '',
+          url: '',
+          level: 'normal',
         };
         if (this.$refs.form) {
           this.$refs.form.reset();
@@ -68,7 +68,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['$http']),
+    ...mapState(['currentAuditUUID', '$http']),
     isShown: {
       get() {
         return this.value;
@@ -93,8 +93,20 @@ export default {
       return (value || '').length <= this.maxInputLength || error;
     },
     async setIntegration() {
-      alert('Under construction');
-      this.isShown = false;
+      const body = { url: this.selected.url, verbose: this.selected.level === 'verbose' };
+      const resp = await this.$http.patch(`/audit/${this.currentAuditUUID}/integration/slack/`, body).catch(() => {
+        this.errorMessage = 'Something went wrong while setting new integration';
+      });
+      switch (resp.status) {
+        case 200: {
+          this.isShown = false;
+          window.location.reload();
+          break;
+        }
+        default: {
+          this.errorMessage = resp.data.message;
+        }
+      }
     },
   },
 

@@ -70,7 +70,8 @@ export default {
       window.location.search = String(qs[0]);
     }
     // Set target audit UUID given through the 1st query parameter
-    this.setCurrentAuditUUID(qs[0]);
+    const auditUUID = qs[0].slice(0, 24) + '0'.repeat(8);
+    this.setCurrentAuditUUID(auditUUID);
 
     // Create HTTP client (axios) with the access token
     this.setHTTPClient(this.createHTTPClient(this.token));

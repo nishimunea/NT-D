@@ -4,27 +4,29 @@
 
 ## Local Debug
 
-* Install and start [Minikube](https://kubernetes.io/ja/docs/tasks/tools/install-minikube/) on your computer.
-
-* Run following commands in `core` directory.
+Install [Minikube](https://kubernetes.io/ja/docs/tasks/tools/install-minikube/) on your computer and create a database pod as follows.
 
 ```
-docker run -e MYSQL_DATABASE=ntd -e MYSQL_ROOT_PASSWORD=Passw0rd! -d -p 3306:3306 mysql:5.7 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+kubectl run --generator=run-pod/v1 --image=mysql:5.7 ntd-database --port=3306 --env="MYSQL_DATABASE=ntd" --env="MYSQL_ROOT_PASSWORD=password" -- --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+kubectl port-forward ntd-database 3306:3306
+```
+
+Run following commands in `core/` directory.
+
+```
 pipenv install -d
 pipenv run server
 pipenv run cron
 ```
 
-* Run following commands in `ui` directory.
+Run following commands in `ui/` directory.
 
 ```
 npm ci
 npm run serve
 ```
 
-* Visit `http://localhost:8080/` on your browser.
-
-* Use `password` for the administrator login.
+Visit `http://localhost:8080/` on your browser and use `password` for the administrator login.
 
 
 ## Disclaimer

@@ -13,7 +13,9 @@ from peewee import MySQLDatabase
 from apis import api
 from apis.authorizers import jwt
 from detectors import dtm
+from integrators import im
 from models import AuditTable
+from models import IntegrationTable
 from models import ResultTable
 from models import ScanTable
 from models import TaskTable
@@ -65,7 +67,7 @@ else:
     app.config["DATABASE"] = MySQLDatabase(
         os.getenv("DB_NAME", "ntd"),
         user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "Passw0rd!"),
+        password=os.getenv("DB_PASSWORD", "password"),
         host=os.getenv("DB_HOST", "127.0.0.1"),
         port=int(os.getenv("DB_PORT", "3306")),
     )
@@ -93,9 +95,10 @@ jwt._set_error_handler_callbacks(api)
 CORS(app, origins=app.config["CORS_PERMITTED_ORIGINS"])
 
 with db.database:
-    db.database.create_tables([AuditTable, ScanTable, TaskTable, ResultTable])
+    db.database.create_tables([AuditTable, ScanTable, TaskTable, ResultTable, IntegrationTable])
 
 dtm.init()
+im.init()
 
 
 @app.before_request

@@ -1,7 +1,9 @@
 import uuid
 
 from peewee import SQL
+from peewee import BooleanField
 from peewee import CharField
+from peewee import CompositeKey
 from peewee import DateTimeField
 from peewee import ForeignKeyField
 from peewee import IntegerField
@@ -85,3 +87,14 @@ class ResultTable(db.Model):
     severity = CharField(null=True)
     created_at = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP")])
     updated_at = DateTimeField(constraints=[SQL("DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")])
+
+
+class IntegrationTable(db.Model):
+    class Meta:
+        db_table = "integration"
+        primary_key = CompositeKey("audit_id", "service")
+
+    audit_id = ForeignKeyField(AuditTable, backref="integrations", on_delete="CASCADE", on_update="CASCADE")
+    service = CharField(null=True)
+    url = CharField(null=True)
+    verbose = BooleanField(default=False)

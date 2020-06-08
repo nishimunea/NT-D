@@ -63,3 +63,10 @@ class Parser:
     ScanSchedulePostRequest.add_argument(
         "rrule", type=inputs.regex("^RRULE:.{,128}$"), default="", location="json"
     )
+
+    # Integration
+    IntegrationPatchRequest = reqparse.RequestParser()
+    IntegrationPatchRequest.add_argument(
+        "url", type=inputs.URL(schemes=["https"], check=False), required=True, location="json"
+    )
+    IntegrationPatchRequest.add_argument("verbose", type=inputs.boolean, default=False, location="json")

@@ -1,6 +1,8 @@
 from flask import current_app as app
 
 from detectors import dtm
+from integrators import NotificationType
+from integrators import im
 from models import ResultTable
 from models import ScanTable
 from models import TaskTable
@@ -38,7 +40,7 @@ class StoppedTaskHandler(TaskHandlerBase):
             ResultTable.insert_many(results).execute()
             ScanTable.update({"ended_at": self.now}).where(ScanTable.task_uuid == task["uuid"]).execute()
 
-        # TODO: Notify to integrators here
+        im.send(NotificationType.RESULT, task)
 
         # Destroy the task without error
         self.finish(task)

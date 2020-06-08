@@ -3,7 +3,7 @@
     <v-app-bar app dense>
       <v-toolbar-title class="headline font-weight-bold">NT-D</v-toolbar-title>
       <v-spacer />
-      <MainMenu />
+      <ScanMenu v-if="currentAuditUUID" />
     </v-app-bar>
     <v-content>
       <v-container class="fill-height">
@@ -45,7 +45,7 @@
 <script>
 import { mapState, mapActions } from 'vuex';
 import AuditList from '@/components/AuditList.vue';
-import MainMenu from '@/components/MainMenu.vue';
+import ScanMenu from '@/components/ScanMenu.vue';
 import ScanList from '@/components/ScanList.vue';
 
 export default {
@@ -53,8 +53,8 @@ export default {
 
   components: {
     AuditList,
-    MainMenu,
     ScanList,
+    ScanMenu,
   },
 
   watch: {

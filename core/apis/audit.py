@@ -5,6 +5,7 @@ import tempfile
 import uuid
 from datetime import timedelta
 from http import HTTPStatus
+from urllib.parse import urlparse
 
 from flask import Response
 from flask import abort
@@ -14,7 +15,9 @@ from flask_restx import Namespace
 from flask_restx import Resource
 from flask_restx import fields
 
+from integrators import im
 from models import AuditTable
+from models import IntegrationTable
 from models import ResultTable
 from models import ScanTable
 from utils.audit import get_audit_by_uuid
@@ -30,6 +33,10 @@ api = Namespace("audit")
 AUDIT_EXPORT_SCAN_RESULT_CSV_COLUMNS = ["host", "port", "name", "description"]
 AUDIT_EXPORT_RESPONSE_HEADERS = {"Content-Type": "text/csv", "Content-Disposition": "attachment"}
 
+IntegrationGetResponseSchema = api.model(
+    "Integration Get Response", {"service": fields.String(required=True)}
+)
+
 AuditGetResponseSchema = api.model(
     "Audit Get Response",
     {
@@ -43,6 +50,7 @@ AuditGetResponseSchema = api.model(
         "updated_by": fields.String(required=True),
         "source_ip_address": fields.String(required=True),
         "scans": fields.List(fields.Nested(ScanGetResponseSchema), required=True),
+        "integrations": fields.List(fields.Nested(IntegrationGetResponseSchema), required=True),
     },
 )
 
@@ -128,6 +136,7 @@ class AuditItem(Resource):
         audit, audit_query = get_audit_by_uuid(audit_uuid)
         audit["source_ip_address"] = os.getenv("NAT_EGRESS_IP", "127.0.0.1")
         audit["scans"] = audit_query[0].scans.dicts()
+        audit["integrations"] = audit_query[0].integrations.dicts()
         return audit
 
     @api.expect(Parser.AuditPatchRequest)
@@ -211,9 +220,6 @@ class AuditExport(Resource):
 @api.response(403, HTTPStatus.FORBIDDEN.description)
 @api.response(404, HTTPStatus.NOT_FOUND.description)
 class AuditScan(Resource):
-
-    ScanListPostInputModel = api.model("ScanListPostInput", {"target": fields.String(required=True)})
-
     @api.expect(Parser.ScanPostRequest)
     @api.marshal_with(ScanGetResponseSchema)
     @token_required()
@@ -246,3 +252,59 @@ class AuditScan(Resource):
         ScanTable(**params).save()
 
         return get_scan_by_uuid(params["uuid"])[0]
+
+
+@api.route("/<string:audit_uuid>/integration/<string:service>/")
+@api.doc(security="API Token")
+@api.response(200, HTTPStatus.OK.description)
+@api.response(400, HTTPStatus.BAD_REQUEST.description)
+@api.response(401, HTTPStatus.UNAUTHORIZED.description)
+@api.response(403, HTTPStatus.FORBIDDEN.description)
+@api.response(404, HTTPStatus.NOT_FOUND.description)
+class AuditIntegration(Resource):
+    @api.expect(Parser.IntegrationPatchRequest)
+    @api.marshal_with(ScanGetResponseSchema)
+    @token_required()
+    def patch(self, audit_uuid, service):
+
+        """
+        Set service integration
+        """
+
+        integrators = im.get_info()
+        supported_services = []
+        for integrator in integrators:
+            supported_services.append(integrator["module"])
+
+        if service not in supported_services:
+            abort(400, "Not supported")
+
+        params = Parser.IntegrationPatchRequest.parse_args()
+
+        try:
+            url = urlparse(params["url"])
+            validate_target(url.hostname)
+        except Exception as e:
+            abort(400, str(e))
+
+        audit, _ = get_audit_by_uuid(audit_uuid)
+        params["audit_id"] = audit["id"]
+        params["service"] = service
+
+        IntegrationTable.insert(params).on_conflict_replace().execute()
+
+        return get_audit_by_uuid(audit_uuid)[0]
+
+    @token_required()
+    def delete(self, audit_uuid, service):
+
+        """
+        Delete the specified service integration
+        """
+
+        audit, _ = get_audit_by_uuid(audit_uuid)
+
+        IntegrationTable.delete().where(
+            (IntegrationTable.audit_id == audit["id"]) & (IntegrationTable.service == service)
+        ).execute()
+        return {}
