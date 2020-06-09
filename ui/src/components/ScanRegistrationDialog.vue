@@ -115,7 +115,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['currentAuditUUID', 'maxTextInputLength', '$http']),
+    ...mapState(['currentAuditUUID', '$http']),
     isShown: {
       get() {
         return this.value;

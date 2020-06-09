@@ -11,9 +11,9 @@
           <div v-if="currentAuditUUID">
             <v-col>
               <h1 class="headline font-weight-bold text--primary">
-                {{ audit.name }}
+                {{ currentAudit.name }}
               </h1>
-              <h2 class="caption text--secondary">{{ audit.description }}</h2>
+              <h2 class="caption text--secondary">{{ currentAudit.description }}</h2>
             </v-col>
           </div>
           <div v-else>
@@ -71,7 +71,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['audit', 'currentAuditUUID', 'snackbar', '$http']),
+    ...mapState(['currentAudit', 'currentAuditUUID', 'snackbar']),
   },
 
   methods: {

@@ -20,11 +20,11 @@ export default {
   },
 
   computed: {
-    ...mapState(['apiEndpoint', 'apiTimeout', 'currentAuditUUID', 'status', 'token', '$http']),
+    ...mapState(['apiEndpoint', 'apiTimeout', 'status', 'token']),
   },
 
   methods: {
-    ...mapActions(['setAudit', 'setCurrentAuditUUID', 'setStatus', 'setHTTPClient', 'setToken', 'forgetToken']),
+    ...mapActions(['setCurrentAuditUUID', 'setCurrentScanUUID', 'setHTTPClient', 'setToken', 'forgetToken']),
     createHTTPClient(token) {
       const httpClient = axios.create({
         baseURL: this.apiEndpoint,
@@ -70,8 +70,15 @@ export default {
       window.location.search = String(qs[0]);
     }
     // Set target audit UUID given through the 1st query parameter
-    const auditUUID = qs[0].slice(0, 24) + '0'.repeat(8);
-    this.setCurrentAuditUUID(auditUUID);
+    if (qs[0].length > 0) {
+      const uuid = qs[0].toLowerCase();
+      const auditUUID = uuid.slice(0, 24) + '0'.repeat(8);
+      this.setCurrentAuditUUID(auditUUID);
+      // Set target scan UUID if scan UUID is given
+      if (uuid.slice(24, 32) !== '0'.repeat(8)) {
+        this.setCurrentScanUUID(uuid);
+      }
+    }
 
     // Create HTTP client (axios) with the access token
     this.setHTTPClient(this.createHTTPClient(this.token));

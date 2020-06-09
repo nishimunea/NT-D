@@ -107,7 +107,7 @@
         <v-list-item-content>
           <span class="overline text--secondary">Notice</span>
           <div class="body-2">
-            Scan attempts will be coming from <b>{{ audit.source_ip_address }}</b
+            Scan attempts will be coming from <b>{{ currentAudit.source_ip_address }}</b
             >.
           </div>
         </v-list-item-content>
@@ -121,7 +121,7 @@
         <v-list-item-content>
           <span class="overline text--secondary">Notice</span>
           <div class="body-2">
-            Now scanning from <b>{{ audit.source_ip_address }}</b
+            Now scanning from <b>{{ currentAudit.source_ip_address }}</b
             >.
           </div>
         </v-list-item-content>
@@ -227,7 +227,7 @@ export default {
   },
 
   computed: {
-    ...mapState(['audit', 'currentScan', 'isShownScanStatusDrawer', '$http']),
+    ...mapState(['currentAudit', 'currentScan', 'isShownScanStatusDrawer', '$http']),
     filteredResults() {
       const results = this.currentScan.results ? this.currentScan.results : [];
       return results.filter((result) => this.selectedSeverities.indexOf(result.severity) >= 0);

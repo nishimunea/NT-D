@@ -38,7 +38,7 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'vuex';
+import { mapState } from 'vuex';
 
 export default {
   name: 'IntegrationSlackDialog',
@@ -80,17 +80,12 @@ export default {
   },
 
   methods: {
-    ...mapActions(['setAudit', 'setSnackbar']),
     close() {
       this.isShown = false;
     },
     validateMinLength(value) {
       const error = 'Must not be empty';
       return (value || '').length !== 0 || error;
-    },
-    validateMaxLength(value) {
-      const error = `Must be equal or less than ${this.maxInputLength} characters`;
-      return (value || '').length <= this.maxInputLength || error;
     },
     async setIntegration() {
       const body = { url: this.selected.url, verbose: this.selected.level === 'verbose' };
@@ -112,7 +107,6 @@ export default {
 
   data: () => ({
     isFormValid: false,
-    maxInputLength: Number(process.env.VUE_APP_MAX_TEXT_INPUT_LENGTH),
     messageLevels: ['normal', 'verbose'],
     selected: {},
     errorMessage: '',

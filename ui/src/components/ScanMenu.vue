@@ -63,13 +63,14 @@ export default {
   },
 
   computed: {
-    ...mapState(['audit', 'currentAuditUUID', '$http']),
+    ...mapState(['currentAudit', 'currentAuditUUID', '$http']),
   },
 
   methods: {
     ...mapActions(['forgetToken', 'setSnackbar']),
     isIntegrationEnabled(service) {
-      return this.audit.integrations && this.audit.integrations.findIndex((item) => item.service === service) >= 0;
+      const integrations = this.currentAudit.integrations || undefined;
+      return integrations && integrations.findIndex((item) => item.service === service) >= 0;
     },
     conrifmDisableIntegration(service) {
       if (window.confirm(`Are you sure you want to disable ${service} integration?`)) {

@@ -10,11 +10,12 @@ export default new Vuex.Store({
   state: {
     apiEndpoint: process.env.VUE_APP_API_ENDPOINT,
     apiTimeout: Number(process.env.VUE_APP_API_TIMEOUT),
-    audit: {
+    currentAudit: {
       scans: [],
     },
     currentAuditUUID: '',
     currentScan: {},
+    currentScanUUID: '',
     isPolicyAccepted: Boolean(localStorage.getItem(policyAccepted) === 'true'),
     isShownScanStatusDrawer: false,
     status: 0,
@@ -23,14 +24,17 @@ export default new Vuex.Store({
     $http: null,
   },
   mutations: {
-    setAudit(state, audit) {
-      state.audit = audit;
+    setCurrentAudit(state, audit) {
+      state.currentAudit = audit;
     },
     setCurrentAuditUUID(state, auditUUID) {
       state.currentAuditUUID = auditUUID;
     },
     setCurrentScan(state, scan) {
       state.currentScan = scan;
+    },
+    setCurrentScanUUID(state, scanUUID) {
+      state.currentScanUUID = scanUUID;
     },
     setIsPolicyAccepted(state, isAccepted) {
       state.isPolicyAccepted = isAccepted;
@@ -51,8 +55,8 @@ export default new Vuex.Store({
       state.token = token;
     },
     updateScan(state, scan) {
-      const index = state.audit.scans.findIndex((e) => e.uuid === scan.uuid);
-      Vue.set(state.audit.scans, index, scan);
+      const index = state.currentAudit.scans.findIndex((e) => e.uuid === scan.uuid);
+      Vue.set(state.currentAudit.scans, index, scan);
     },
   },
   actions: {
@@ -60,14 +64,17 @@ export default new Vuex.Store({
       localStorage.removeItem(accessTokenKey);
       commit('setToken', null);
     },
-    setAudit({ commit }, audit) {
-      commit('setAudit', audit);
+    setCurrentAudit({ commit }, audit) {
+      commit('setCurrentAudit', audit);
     },
     setCurrentAuditUUID({ commit }, auditUUID) {
       commit('setCurrentAuditUUID', auditUUID);
     },
     setCurrentScan({ commit }, scan) {
       commit('setCurrentScan', scan);
+    },
+    setCurrentScanUUID({ commit }, scanUUID) {
+      commit('setCurrentScanUUID', scanUUID);
     },
     setIsPolicyAccepted({ commit }, isAccepted) {
       localStorage.setItem(policyAccepted, String(isAccepted));

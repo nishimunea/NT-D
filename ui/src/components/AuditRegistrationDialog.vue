@@ -88,7 +88,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['setAudit', 'setSnackbar']),
+    ...mapActions(['setSnackbar']),
     close() {
       this.isShown = false;
     },

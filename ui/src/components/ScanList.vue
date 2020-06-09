@@ -5,12 +5,12 @@
         <v-icon class="mr-1">assessment</v-icon>Scan List
         <v-spacer />
 
-        <v-tooltip bottom :disabled="audit.scans.length < maxScanCount" color="#CF6679">
+        <v-tooltip bottom :disabled="currentAudit.scans.length < maxScanCount" color="#CF6679">
           <template v-slot:activator="{ on }">
             <span v-on="on">
               <v-btn
                 class="mr-4"
-                :disabled="audit.scans.length >= maxScanCount"
+                :disabled="currentAudit.scans.length >= maxScanCount"
                 @click="isShownScanRegistrationDialog = true"
               >
                 <v-icon left>add</v-icon>New Scan
@@ -26,7 +26,7 @@
       <div @click.stop>
         <v-data-table
           :headers="headers"
-          :items="audit.scans"
+          :items="currentAudit.scans"
           :items-per-page="defaultItemsPerPage"
           :search="search"
           :loading="isAuditLoading"
@@ -178,19 +178,20 @@ export default {
   },
 
   computed: {
-    ...mapState(['audit', 'currentAuditUUID', 'isPolicyAccepted', '$http']),
+    ...mapState(['currentAudit', 'currentAuditUUID', 'currentScanUUID', 'isPolicyAccepted', '$http']),
   },
 
   methods: {
     ...mapActions([
       'updateScan',
-      'setAudit',
+      'setCurrentAudit',
       'setCurrentScan',
+      'setCurrentScanUUID',
       'setIsShownScanStatusDrawer',
       'setStatus',
       'setSnackbar',
     ]),
-    async getAudit() {
+    async getCurrentAudit() {
       this.isAuditLoading = true;
       const resp = await this.$http.get(`/audit/${this.currentAuditUUID}/`).catch(() => {
         this.setStatus(500);
@@ -198,9 +199,8 @@ export default {
       switch (resp.status) {
         case 200: {
           this.isAuditLoading = false;
-          this.setAudit(resp.data);
+          this.setCurrentAudit(resp.data);
           this.setStatus(200);
-          window.document.title = `${process.env.VUE_APP_TITLE} - ${resp.data.name}`;
           break;
         }
         default: {
@@ -209,7 +209,7 @@ export default {
       }
     },
     handleRegisteredScan(registeredScan) {
-      this.getAudit();
+      this.getCurrentAudit();
       this.openScheduleDialog(registeredScan);
     },
     openDetails(scan) {
@@ -253,7 +253,7 @@ export default {
     conrifmDeleteScan(scanUuid) {
       if (window.confirm('Are you sure you want to delete this item?')) {
         this.deleteScan(scanUuid);
-        this.getAudit();
+        this.getCurrentAudit();
       }
     },
     async deleteScan(scanUuid) {
@@ -348,9 +348,20 @@ export default {
     }
   },
 
-  created() {
-    this.getAudit();
-    setInterval(this.getAudit, this.reloadInterval);
+  async created() {
+    await this.getCurrentAudit();
+    window.document.title = `${process.env.VUE_APP_TITLE} - ${this.currentAudit.name}`;
+    if (this.currentScanUUID) {
+      const index = this.currentAudit.scans.findIndex((e) => e.uuid === this.currentScanUUID);
+      if (index >= 0) {
+        this.openScanStatusDrawer(this.currentAudit.scans[index]);
+      } else {
+        this.setSnackbar({ message: 'Scan not found.', isError: true });
+      }
+      this.setCurrentScanUUID('');
+    }
+
+    setInterval(this.getCurrentAudit, this.reloadInterval);
   },
 };
 </script>
