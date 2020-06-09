@@ -18,6 +18,17 @@ class PendingTaskHandler(TaskHandlerBase):
     def add(self, scan):
         app.logger.info("Try to enqueue into {}: scan={}".format(self.progress, scan))
         validate_target(scan["target"])
+
+        # Avoid concurrent scanning for the same target
+        task_query = TaskTable.select().where(TaskTable.target == scan["target"])
+        if task_query.count() > 0:
+            app.logger.info(
+                "Abandoned to enqueue scan={} because another scan for '{}' is still running".format(
+                    scan["id"], scan["target"]
+                )
+            )
+            return None
+
         detector = dtm.load_detector(scan["detection_module"], None)
         session = detector.create()
         task = {

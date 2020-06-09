@@ -43,8 +43,9 @@ class TaskScheduler:
                 with db.database.atomic():
                     # Enqueue the task to pending queue
                     task = PendingTaskHandler().add(scan)
-                    # ToDo: Consider race condition between scan reschedule API and this thread context
-                    ScanTable.update({"task_uuid": task.uuid}).where(ScanTable.id == scan["id"]).execute()
+                    if task:
+                        # ToDo: Consider race condition between scan reschedule API and this thread context
+                        ScanTable.update({"task_uuid": task.uuid}).where(ScanTable.id == scan["id"]).execute()
 
                 app.logger.info("Set scan successfully: scan={}".format(scan["id"]))
 
