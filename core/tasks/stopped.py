@@ -34,6 +34,7 @@ class StoppedTaskHandler(TaskHandlerBase):
         # Change keys for conforming to result table schema
         for result in results:
             result["scan_id"] = task["scan_id"]
+
         # Delete and insert scan results for keeping only the latest scan result
         with db.database.atomic():
             ResultTable.delete().where(ResultTable.scan_id == task["scan_id"]).execute()

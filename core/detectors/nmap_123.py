@@ -1,4 +1,5 @@
 import uuid
+import xml.etree.ElementTree as et
 
 from flask import current_app as app
 from kubernetes.client.api import core_v1_api
@@ -16,16 +17,20 @@ from utils import Utils
 class Detector(AbstractDetector):
 
     NAME = "Nmap"
-    VERSION = "Version"
-    SUPPORTED_MODE = [DetectionMode.UNSAFE.value]
-    STAGE = ReleaseStage.DEPRECATED.value
-    DESCRIPTION = "Nmap Description"
+    VERSION = "7.80"
+    SUPPORTED_MODE = [DetectionMode.SAFE.value]
+    STAGE = ReleaseStage.BETA.value
+    DESCRIPTION = "Network security scannner"
 
     POD_NAME_PREFIX = "nmap"
     POD_NAMESPACE = "default"
     CONTAINER_IMAGE = "docker.io/instrumentisto/nmap:7.80"
 
-    CMD_RUN_SCAN_SAFE = "nohup nmap -sV -O -sC -Pn -oX out.xml {target} > /dev/null 2>&1 &"
+    SAFE_PORTS = [80, 443]
+
+    #    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -T2 -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
+    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
+
     CMD_CHECK_SCAN_STATUS = "ps x | grep nmap | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat out.xml"
 
@@ -140,66 +145,92 @@ class Detector(AbstractDetector):
             tty=False,
         )
 
-        results = [
-            {
-                "host": "__nmap host1__",
-                "port": "__nmap port1__",
-                "name": "__nmap name1__",
-                "description": "__nmap description1__",
-                "severity": Severity.HIGH.value,
-            },
-            {
-                "host": "__nmap host2__",
-                "port": "__nmap port2__",
-                "name": "__nmap name2__",
-                "description": "__nmap description2__",
-                "severity": Severity.MEDIUM.value,
-            },
-            {
-                "host": "__nmap host3__",
-                "port": "__nmap port3__",
-                "name": "__nmap name3__",
-                "description": "__nmap description3__",
-                "severity": Severity.LOW.value,
-            },
-            {
-                "host": "__nmap host4__",
-                "port": "__nmap port4__",
-                "name": "__nmap name4__",
-                "description": "__nmap description4__",
-                "severity": Severity.INFO.value,
-            },
-            {
-                "host": "__nmap host5__",
-                "port": "__nmap port5__",
-                "name": "__nmap name5__",
-                "description": "__nmap description5__",
-                "severity": Severity.HIGH.value,
-            },
-            {
-                "host": "__nmap host6__",
-                "port": "__nmap port6__",
-                "name": "__nmap name6__",
-                "description": "__nmap description6__",
-                "severity": Severity.MEDIUM.value,
-            },
-            {
-                "host": "__nmap host7__",
-                "port": "__nmap port7__",
-                "name": "__nmap name7__",
-                "description": "__nmap description7__",
-                "severity": Severity.LOW.value,
-            },
-            {
-                "host": "__nmap host8__",
-                "port": "__nmap port8__",
-                "name": "__nmap name8__",
-                "description": "__nmap description8__",
-                "severity": Severity.INFO.value,
-            },
-        ]
-
         app.logger.info("Got scan result successfully: resp={}".format(resp))
 
-        # TODO: Set actual scan result
+        # ToDo: Store raw reports in GCS
+
+        results = []
+        results_script = []
+
+        nmaprun = et.fromstring(resp)
+        host = nmaprun.find("host")
+
+        address = host.find("address").get("addr")
+        status = host.find("status").get("state")
+        if status != "up":
+            raise Exception("Host '{}' is not running, status={}".format(address, status))
+
+        hostnames = host.find("hostnames")
+        hostnames_desc = ""
+        for hostname in hostnames.findall("hostname"):
+            hostnames_desc += "{} ({})\n".format(hostname.get("name"), hostname.get("type"))
+        results.append(
+            {
+                "host": address,
+                "name": "Hostnames",
+                "description": hostnames_desc.strip(),
+                "severity": Severity.INFO.value,
+            }
+        )
+
+        oses = host.find("os")
+        oses_desc = ""
+        for osmatch in oses.findall("osmatch"):
+            oses_desc += "{} ({}%)\n".format(osmatch.get("name"), osmatch.get("accuracy"))
+        results.append(
+            {
+                "host": address,
+                "name": "OS Detection",
+                "description": oses_desc.strip(),
+                "severity": Severity.INFO.value,
+            }
+        )
+
+        ports = host.find("ports")
+        openports_desc = ""
+        openports_severity = Severity.INFO.value
+        for port in ports.findall("port"):
+            state = port.find("state")
+            if "open" in state.get("state"):
+                # Open Ports
+                protocol = port.get("protocol")
+                portid = port.get("portid")
+                if portid not in Detector.SAFE_PORTS:
+                    openports_severity = Severity.MEDIUM.value
+                port_str = "{}:{}".format(protocol, portid)
+
+                service = port.find("service")
+                service_str = ""
+                if service:
+                    product = service.get("product")
+                    version = service.get("version", "")
+                    if product:
+                        service_str = "{} {}".format(product, version).strip()
+                    else:
+                        service_str = service.get("name")
+                openports_desc += "{} ({})".format(port_str, service_str) if service_str else port_str
+                openports_desc += "\n"
+
+                # Scripts
+                for script in port.findall("script"):
+                    results_script.append(
+                        {
+                            "host": address,
+                            "port": port_str,
+                            "name": "{} ({})".format(script.get("id", ""), port_str),
+                            "description": script.get("output", ""),
+                            "severity": Severity.INFO.value,
+                        }
+                    )
+
+        results.append(
+            {
+                "host": address,
+                "name": "Open Ports",
+                "description": openports_desc.strip(),
+                "severity": openports_severity,
+            }
+        )
+
+        results.extend(results_script)
         return results
