@@ -212,8 +212,9 @@ export default {
         if (this.isShownScanStatusDrawer && this.getCurrentStatus() === 'Completed' && !scan.results) {
           // Load scan results when opened
           await this.getScanStatus();
-          this.setInitialSelectedSeverities();
         }
+        this.setResultCount(scan.results);
+        this.setInitialSelectedSeverities();
       },
       deep: true,
     },
@@ -254,7 +255,6 @@ export default {
           if (this.currentScan.uuid === resp.data.uuid) {
             this.setCurrentScan(resp.data);
             this.updateScan(resp.data);
-            this.setResultCount(resp.data.results);
           }
           break;
         }
@@ -287,6 +287,9 @@ export default {
         Low: 0,
         Info: 0,
       };
+      if (!results) {
+        return;
+      }
       results.map((result) => {
         count[result.severity] += 1;
         return undefined;
