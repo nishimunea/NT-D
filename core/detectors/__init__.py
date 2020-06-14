@@ -142,6 +142,7 @@ class AbstractDetector(metaclass=ABCMeta):
 
     @abstractmethod
     def get_results(self):
+        report = "__report__"
         results = [
             {
                 "host": "__host_1__",
@@ -156,7 +157,7 @@ class AbstractDetector(metaclass=ABCMeta):
                 "description": "__description_2__",
             },
         ]
-        return results
+        return results, report
 
     @abstractmethod
     def delete(self):

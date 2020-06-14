@@ -21,3 +21,11 @@ output "GKE_MASTER_SERVER" {
 output "NAT_EGRESS_IP" {
   value = google_compute_address.ntd_egress_ip.address
 }
+
+output "GCP_PROJECT_ID" {
+  value = data.google_project.project.project_id
+}
+
+output "BUCKET_NAME" {
+  value = "${data.google_project.project.project_id}.appspot.com"
+}

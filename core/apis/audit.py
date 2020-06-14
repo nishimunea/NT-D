@@ -20,6 +20,7 @@ from models import AuditTable
 from models import IntegrationTable
 from models import ResultTable
 from models import ScanTable
+from storages import Storage
 from utils.audit import get_audit_by_uuid
 from utils.scan import get_scan_by_uuid
 from utils.scan import validate_target
@@ -162,6 +163,7 @@ class AuditItem(Resource):
         """
 
         AuditTable.delete().where(AuditTable.uuid == audit_uuid).execute()
+        Storage().delete(audit_uuid)
         return {}
 
 

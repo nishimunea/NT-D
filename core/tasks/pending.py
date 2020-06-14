@@ -34,6 +34,7 @@ class PendingTaskHandler(TaskHandlerBase):
         task = {
             "audit_id": scan["audit_id"],
             "scan_id": scan["id"],
+            "scan_uuid": scan["uuid"],
             "target": scan["target"],
             "scheduled_at": scan["scheduled_at"],
             "max_duration": scan["max_duration"],

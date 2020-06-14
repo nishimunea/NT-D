@@ -132,6 +132,9 @@
     <div v-if="getCurrentStatus() === 'Completed'">
       <v-divider />
       <v-progress-linear v-if="isScanStatusLoading" indeterminate></v-progress-linear>
+      <v-btn x-small outlined class="mt-4 mr-4 float-right" color="grey lighten-1" @click="getRawResult">
+        <v-icon left x-small class="mr-1">get_app</v-icon>Raw Data
+      </v-btn>
       <v-subheader class="overline">Results</v-subheader>
       <v-list-item>
         <v-list-item-content class="my-0 py-0">
@@ -256,6 +259,25 @@ export default {
             this.setCurrentScan(resp.data);
             this.updateScan(resp.data);
           }
+          break;
+        }
+        default: {
+          this.isError = true;
+        }
+      }
+    },
+    async getRawResult() {
+      const resp = await this.$http.get(`/scan/${this.currentScan.uuid}/download/`).catch(() => {
+        this.isError = true;
+      });
+      switch (resp.status) {
+        case 200: {
+          const url = window.URL.createObjectURL(new Blob([resp.data]));
+          const link = document.createElement('a');
+          link.href = url;
+          link.setAttribute('download', `${this.currentScan.uuid}.txt`);
+          document.body.appendChild(link);
+          link.click();
           break;
         }
         default: {

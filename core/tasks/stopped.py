@@ -7,6 +7,7 @@ from models import ResultTable
 from models import ScanTable
 from models import TaskTable
 from models import db
+from storages import Storage
 from tasks import TaskHandlerBase
 from tasks import TaskProgress
 
@@ -29,7 +30,10 @@ class StoppedTaskHandler(TaskHandlerBase):
 
     def process(self, task):
         detector = dtm.load_detector(task["detection_module"], task["session"])
-        results = detector.get_results()
+        results, report = detector.get_results()
+
+        # Store raw report to storage
+        Storage().store(task["scan_uuid"].hex, report)
 
         # Change keys for conforming to result table schema
         for result in results:

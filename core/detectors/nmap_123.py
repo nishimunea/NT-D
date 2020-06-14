@@ -134,7 +134,7 @@ class Detector(AbstractDetector):
     def get_results(self):
         app.logger.info("Try to get scan results: session={}".format(self.session))
 
-        resp = stream(
+        report = stream(
             self.core_api.connect_get_namespaced_pod_exec,
             self.session["pod"]["name"],
             Detector.POD_NAMESPACE,
@@ -145,14 +145,14 @@ class Detector(AbstractDetector):
             tty=False,
         )
 
-        app.logger.info("Got scan result successfully: resp={}".format(resp))
+        app.logger.info("Got scan result successfully: report={}".format(report))
 
         # ToDo: Store raw reports in GCS
 
         results = []
         results_script = []
 
-        nmaprun = et.fromstring(resp)
+        nmaprun = et.fromstring(report)
         host = nmaprun.find("host")
 
         address = host.find("address").get("addr")
@@ -233,4 +233,4 @@ class Detector(AbstractDetector):
         )
 
         results.extend(results_script)
-        return results
+        return results, report

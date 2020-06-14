@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 import pytz
+from flask import Response
 from flask import abort
 from flask import g
 from flask_restx import Namespace
@@ -9,6 +10,7 @@ from flask_restx import fields
 
 from models import ResultTable
 from models import ScanTable
+from storages import Storage
 from utils.scan import get_scan_by_uuid
 from utils.scan import validate_schedule
 
@@ -148,3 +150,26 @@ class ScanSchedule(Resource):
 
         ScanTable.update(default_values).where(ScanTable.uuid == scan_uuid).execute()
         return get_scan_by_uuid(scan_uuid)[0]
+
+
+@api.route("/<string:scan_uuid>/download/")
+@api.doc(security="API Token")
+@api.response(
+    200,
+    HTTPStatus.OK.description,
+    headers={"Content-Type": "text/plain", "Content-Disposition": "attachment"},
+)
+@api.response(401, HTTPStatus.UNAUTHORIZED.description)
+@api.response(403, HTTPStatus.FORBIDDEN.description)
+@api.response(404, HTTPStatus.NOT_FOUND.description)
+class ScanSchedule(Resource):
+    @token_required()
+    def get(self, scan_uuid):
+
+        """
+        Retrieve raw result of the specified scan
+        """
+
+        data = Storage().load(scan_uuid)
+        headers = {"Content-Type": "text/plain", "Content-Disposition": "attachment"}
+        return Response(response=data, status=200, headers=headers)

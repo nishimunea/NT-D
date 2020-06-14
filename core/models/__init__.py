@@ -58,6 +58,7 @@ class TaskTable(db.Model):
     uuid = UUIDField(unique=True, default=uuid.uuid4)
     audit_id = ForeignKeyField(AuditTable, null=True, on_delete="SET NULL", on_update="CASCADE")
     scan_id = ForeignKeyField(ScanTable, null=True, on_delete="SET NULL", on_update="CASCADE")
+    scan_uuid = UUIDField(null=True, default=None)
     target = CharField(default="")
     scheduled_at = DateTimeField(default=None)
     max_duration = IntegerField(default=0)
