@@ -184,11 +184,3 @@ export default {
   }),
 };
 </script>
-<style scoped>
-.card-title-ellipsis {
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-  display: block;
-}
-</style>

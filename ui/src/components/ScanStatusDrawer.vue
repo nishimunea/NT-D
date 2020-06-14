@@ -168,13 +168,13 @@
       </v-list-item>
       <v-list two-line dense flat>
         <v-list-item-group v-for="(result, key) in filteredResults" :key="key">
-          <v-list-item>
+          <v-list-item @click="openResultDetails(result)">
             <v-list-item-content>
               <v-list-item-title>
                 {{ result.name }}
               </v-list-item-title>
               <v-list-item-subtitle class="text--disabled">
-                {{ result.description }}
+                {{ result.description.replace(/\n/g, ', ') }}
               </v-list-item-subtitle>
             </v-list-item-content>
 
@@ -188,6 +188,7 @@
         </v-list-item-group>
       </v-list>
     </div>
+    <ScanResultDialog v-model="isShownScanResultDialog" />
   </v-navigation-drawer>
 </template>
 
@@ -196,16 +197,22 @@ import moment from 'moment';
 import { RRule } from 'rrule';
 import colors from 'vuetify/lib/util/colors';
 import { mapState, mapActions } from 'vuex';
+import ScanResultDialog from '@/components/ScanResultDialog.vue';
 
 export default {
   name: 'ScanStatusDrawer',
 
+  components: {
+    ScanResultDialog,
+  },
+
   watch: {
     currentScan: {
-      handler(scan) {
+      async handler(scan) {
         if (this.isShownScanStatusDrawer && this.getCurrentStatus() === 'Completed' && !scan.results) {
           // Load scan results when opened
-          this.getScanStatus();
+          await this.getScanStatus();
+          this.setInitialSelectedSeverities();
         }
       },
       deep: true,
@@ -235,7 +242,7 @@ export default {
   },
 
   methods: {
-    ...mapActions(['setCurrentScan', 'updateScan']),
+    ...mapActions(['setCurrentScan', 'setCurrentResult', 'updateScan']),
     async getScanStatus() {
       this.isScanStatusLoading = true;
       const resp = await this.$http.get(`/scan/${this.currentScan.uuid}/`).catch(() => {
@@ -269,6 +276,10 @@ export default {
       const endTime = end ? moment(end) : moment().subtract(utcOffset, 'minutes');
       return endTime.diff(moment(start), 'minutes');
     },
+    openResultDetails(result) {
+      this.setCurrentResult(result);
+      this.isShownScanResultDialog = true;
+    },
     setResultCount(results) {
       const count = {
         High: 0,
@@ -282,11 +293,22 @@ export default {
       });
       this.resultCount = count;
     },
+    setInitialSelectedSeverities() {
+      const candidates = [];
+      /* eslint no-restricted-syntax: 0 */
+      for (const severity of Object.keys(this.resultCount)) {
+        if (this.resultCount[severity] > 0) {
+          candidates.push(severity);
+        }
+      }
+      this.selectedSeverities = candidates.length > 0 ? candidates : this.severities;
+    },
   },
 
   data: () => ({
     isScanStatusLoading: false,
-    selectedSeverities: ['High', 'Medium'],
+    isShownScanResultDialog: false,
+    selectedSeverities: [],
     severities: ['High', 'Medium', 'Low', 'Info'],
     reloadInterval: Number(process.env.VUE_APP_SCAN_RELOAD_INTERVAL),
     resultCount: {

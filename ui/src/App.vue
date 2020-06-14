@@ -86,6 +86,13 @@ export default {
 };
 </script>
 <style>
+.card-title-ellipsis {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  display: block;
+}
+
 .elipsis {
   display: inline-block;
   vertical-align: inherit;
