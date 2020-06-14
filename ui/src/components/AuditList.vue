@@ -30,10 +30,10 @@
         </span>
       </template>
       <template v-slot:item.created_at="{ item }">
-        {{ $helper.getLocalTime(item.created_at).format('YYYY-MM-DD hh:mm') }}
+        {{ $helper.getLocalTime(item.created_at).format('YYYY-MM-DD HH:mm') }}
       </template>
       <template v-slot:item.updated_at="{ item }">
-        {{ $helper.getLocalTime(item.updated_at).format('YYYY-MM-DD hh:mm') }}
+        {{ $helper.getLocalTime(item.updated_at).format('YYYY-MM-DD HH:mm') }}
       </template>
       <template v-slot:item.actions="{ item }">
         <v-icon small @click.stop="conrifmDeleteAudit(item.uuid)">delete</v-icon>
@@ -92,9 +92,9 @@ export default {
       href.search = audit.uuid;
       window.open(href, '_blank');
     },
-    conrifmDeleteAudit(auditUuid) {
+    async conrifmDeleteAudit(auditUuid) {
       if (window.confirm('Are you sure you want to delete this item?')) {
-        this.deleteAudit(auditUuid);
+        await this.deleteAudit(auditUuid);
         this.getAudits();
       }
     },

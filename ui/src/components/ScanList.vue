@@ -105,7 +105,7 @@
           <!-- Last Updated At Field -->
           <template v-slot:item.updated_at="{ item }">
             <div class="elipsis" style="max-width: 100pt;">
-              {{ $helper.getLocalTime(item.updated_at).format('YYYY-MM-DD hh:mm') }}
+              {{ $helper.getLocalTime(item.updated_at).format('YYYY-MM-DD HH:mm') }}
             </div>
           </template>
 

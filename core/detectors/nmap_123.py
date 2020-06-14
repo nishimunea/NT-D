@@ -26,10 +26,9 @@ class Detector(AbstractDetector):
     POD_NAMESPACE = "default"
     CONTAINER_IMAGE = "docker.io/instrumentisto/nmap:7.80"
 
-    SAFE_PORTS = [80, 443]
+    SAFE_PORTS = ["80", "443"]
 
-    #    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -T2 -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
-    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
+    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -T2 -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
 
     CMD_CHECK_SCAN_STATUS = "ps x | grep nmap | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat out.xml"
