@@ -41,6 +41,7 @@ class StoppedTaskHandler(TaskHandlerBase):
             ResultTable.insert_many(results).execute()
             ScanTable.update({"ended_at": self.now}).where(ScanTable.task_uuid == task["uuid"]).execute()
 
+        task["results"] = results
         im.send(NotificationType.RESULT, task)
 
         # Destroy the task without error
