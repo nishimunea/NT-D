@@ -32,6 +32,7 @@
                   label="Detection Mode"
                   :items="selected.detection_module ? selected.detection_module.supported_mode : []"
                   menu-props="auto"
+                  class="capitalize"
                 ></v-select>
               </v-col>
             </v-row>
@@ -110,6 +111,12 @@ export default {
         }
       } else {
         this.selected = {};
+      }
+    },
+    'selected.detection_module': function watchSelectedDetectionModule(detectionModule) {
+      if (detectionModule) {
+        const mode = detectionModule.supported_mode[0];
+        this.selected.detection_mode = mode;
       }
     },
   },
@@ -192,3 +199,8 @@ export default {
   },
 };
 </script>
+<style scoped>
+.capitalize {
+  text-transform: capitalize;
+}
+</style>
