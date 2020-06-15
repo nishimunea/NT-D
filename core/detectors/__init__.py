@@ -60,16 +60,16 @@ class DetectorManager:
 
 @unique
 class DetectionMode(Enum):
-    SAFE = "safe"
-    UNSAFE = "unsafe"
+    SAFE = "Safe"
+    UNSAFE = "Unsafe"
 
 
 @unique
 class ReleaseStage(Enum):
-    ALPHA = "alpha"
-    BETA = "beta"
-    STABLE = "stable"
-    DEPRECATED = "deprecated"
+    ALPHA = "Alpha"
+    BETA = "Beta"
+    STABLE = "Stable"
+    DEPRECATED = "Deprecated"
 
 
 @unique

@@ -1,6 +1,10 @@
+import re
 import uuid
 import xml.etree.ElementTree as et
+from datetime import datetime
+from datetime import timedelta
 
+import pytz
 from flask import current_app as app
 from kubernetes.client.api import core_v1_api
 from kubernetes.stream import stream
@@ -14,13 +18,26 @@ from detectors import Severity
 from utils import Utils
 
 
+def get_nmap_ssl_cert_severity(output):
+    severity = Severity.INFO.value
+    now = datetime.now(tz=pytz.utc)
+    try:
+        m = re.search(r"Not valid after: *([0-9-T:]+)", output)
+        expired_at = datetime.strptime(m.group(1), "%Y-%m-%dT%H:%M:%S").replace(tzinfo=pytz.utc)
+        if now > (expired_at + timedelta(days=30)):
+            severity = Severity.MEDIUM.value
+    except Exception as error:
+        app.logger.warn("Could not check SSL certificate severity output={}, error={}".format(output, error))
+    return severity
+
+
 class Detector(AbstractDetector):
 
     NAME = "Nmap"
     VERSION = "7.80"
     SUPPORTED_MODE = [DetectionMode.SAFE.value]
     STAGE = ReleaseStage.BETA.value
-    DESCRIPTION = "Network security scannner"
+    DESCRIPTION = "Network security scanner"
 
     POD_NAME_PREFIX = "nmap"
     POD_NAMESPACE = "default"
@@ -28,10 +45,33 @@ class Detector(AbstractDetector):
 
     SAFE_PORTS = ["80", "443"]
 
-    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -T2 -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
+    # ToDo: Add -T2
+    CMD_RUN_SCAN_SAFE = "nohup nmap -Pn -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
 
     CMD_CHECK_SCAN_STATUS = "ps x | grep nmap | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat out.xml"
+
+    SEVERITY_DEFINITIONS = {
+        "dns-recursion": Severity.LOW.value,
+        "ftp-anon": Severity.LOW.value,
+        "ftp-bounce": Severity.LOW.value,
+        "http-git": Severity.MEDIUM.value,
+        "http-methods": Severity.LOW.value,
+        "http-open-proxy": Severity.LOW.value,
+        "http-webdav-scan": Severity.HIGH.value,
+        "sip-methods": Severity.LOW.value,
+        "smb-os-discovery": Severity.MEDIUM.value,
+        "smb2-security-mode": Severity.MEDIUM.value,
+        "socks-open-proxy": Severity.MEDIUM.value,
+        "sshv1": Severity.LOW.value,
+        "ssl-cert": get_nmap_ssl_cert_severity,
+        "ssl-known-key": Severity.MEDIUM.value,
+        "sslv2": Severity.LOW.value,
+        "upnp-info": Severity.LOW.value,
+        "vnc-info": Severity.MEDIUM.value,
+        "x11-access": Severity.MEDIUM.value,
+        "xmpp-info": Severity.MEDIUM.value,
+    }
 
     def __init__(self, session):
         super().__init__(session)
@@ -146,8 +186,6 @@ class Detector(AbstractDetector):
 
         app.logger.info("Got scan result successfully: report={}".format(report))
 
-        # ToDo: Store raw reports in GCS
-
         results = []
         results_script = []
 
@@ -212,13 +250,16 @@ class Detector(AbstractDetector):
 
                 # Scripts
                 for script in port.findall("script"):
+                    severity = self.SEVERITY_DEFINITIONS.get(script.get("id", ""), Severity.INFO.value)
+                    if callable(severity):
+                        severity = severity(script.get("output", ""))
                     results_script.append(
                         {
                             "host": address,
                             "port": port_str,
                             "name": "{} ({})".format(script.get("id", ""), port_str),
                             "description": script.get("output", ""),
-                            "severity": Severity.INFO.value,
+                            "severity": severity,
                         }
                     )
 
