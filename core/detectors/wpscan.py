@@ -20,9 +20,9 @@ class Detector(DetectorBase):
 
     CONTAINER_IMAGE = "docker.io/wpscanteam/wpscan:latest"
 
-    CMD_RUN_SCAN_SAFE = "nohup wpscan --url {target} --format json --disable-tls-checks --max-threads 1 --throttle 1 --enumerate vp,vt,tt,cb,dbe > /wpscan/out.txt 2> /dev/null &"
+    CMD_RUN_SCAN = "nohup wpscan --url {target} --format json --disable-tls-checks --max-threads 1 --throttle 1 --enumerate vp,vt,tt,cb,dbe > /wpscan/out.json 2> /dev/null &"
     CMD_CHECK_SCAN_STATUS = "ps x | grep wpscan | grep -v grep | wc -c"
-    CMD_GET_SCAN_RESULTS = "cat /wpscan/out.txt"
+    CMD_GET_SCAN_RESULTS = "cat /wpscan/out.json"
 
     def __init__(self, session):
         super().__init__(session)
