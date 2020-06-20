@@ -11,6 +11,7 @@ from kubernetes.stream import stream
 
 from detectors import AbstractDetector
 from detectors import DetectionMode
+from detectors import DetectionTarget
 from detectors import GKEConfiguration
 from detectors import LocalKubernetesConfiguration
 from detectors import ReleaseStage
@@ -36,6 +37,7 @@ class Detector(AbstractDetector):
     NAME = "Nmap"
     VERSION = "7.80"
     SUPPORTED_MODE = [DetectionMode.SAFE.value]
+    TARGET_TYPE = DetectionTarget.HOST.value
     STAGE = ReleaseStage.BETA.value
     DESCRIPTION = "Network security scanner"
 

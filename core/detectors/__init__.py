@@ -43,6 +43,7 @@ class DetectorManager:
                     "name": self.detectors[dt].NAME,
                     "version": self.detectors[dt].VERSION,
                     "supported_mode": self.detectors[dt].SUPPORTED_MODE,
+                    "target_type": self.detectors[dt].TARGET_TYPE,
                     "stage": self.detectors[dt].STAGE,
                     "description": self.detectors[dt].DESCRIPTION,
                 }
@@ -62,6 +63,12 @@ class DetectorManager:
 class DetectionMode(Enum):
     SAFE = "Safe"
     UNSAFE = "Unsafe"
+
+
+@unique
+class DetectionTarget(Enum):
+    HOST = "Host"
+    URL = "URL"
 
 
 @unique

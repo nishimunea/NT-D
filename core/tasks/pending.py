@@ -3,12 +3,14 @@ from datetime import timedelta
 import pytz
 from flask import current_app as app
 
+from detectors import DetectionTarget
 from detectors import dtm
 from models import TaskTable
 from tasks import TaskHandlerBase
 from tasks import TaskProgress
 from tasks.running import RunningTaskHandler
-from utils.scan import validate_target
+from utils.scan import get_safe_url
+from utils.scan import validate_host
 
 
 class PendingTaskHandler(TaskHandlerBase):
@@ -17,7 +19,12 @@ class PendingTaskHandler(TaskHandlerBase):
 
     def add(self, scan):
         app.logger.info("Try to enqueue into {}: scan={}".format(self.progress, scan))
-        validate_target(scan["target"])
+        detector = dtm.load_detector(scan["detection_module"], None)
+
+        if detector.TARGET_TYPE == DetectionTarget.HOST.name:
+            validate_host(scan["target"])
+        elif detector.TARGET_TYPE == DetectionTarget.URL.name:
+            scan["target"] = get_safe_url(scan["target"])
 
         # Avoid concurrent scanning for the same target
         task_query = TaskTable.select().where(TaskTable.target == scan["target"])
@@ -29,7 +36,6 @@ class PendingTaskHandler(TaskHandlerBase):
             )
             return None
 
-        detector = dtm.load_detector(scan["detection_module"], None)
         session = detector.create()
         task = {
             "audit_id": scan["audit_id"],

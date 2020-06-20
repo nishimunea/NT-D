@@ -43,8 +43,12 @@
                   v-model="selected.target"
                   dense
                   :rules="[validateMinLength]"
-                  label="Scan Target"
-                  placeholder="IPv4 address or FQDN"
+                  :label="`Scan Target ${
+                    selected.detection_module ? '(' + selected.detection_module.target_type + ')' : ''
+                  }`"
+                  :placeholder="
+                    selected.detection_module ? targetPlaceholder[selected.detection_module.target_type] : ' '
+                  "
                 />
               </v-col>
             </v-row>
@@ -191,6 +195,10 @@ export default {
     maxInputLength: Number(process.env.VUE_APP_MAX_TEXT_INPUT_LENGTH),
     selected: {},
     detectors: [],
+    targetPlaceholder: {
+      Host: 'IPv4 address or FQDN',
+      URL: 'http(s)://',
+    },
     errorMessage: '',
   }),
 

@@ -5,7 +5,6 @@ import tempfile
 import uuid
 from datetime import timedelta
 from http import HTTPStatus
-from urllib.parse import urlparse
 
 from flask import Response
 from flask import abort
@@ -15,6 +14,8 @@ from flask_restx import Namespace
 from flask_restx import Resource
 from flask_restx import fields
 
+from detectors import DetectionTarget
+from detectors import dtm
 from integrators import im
 from models import AuditTable
 from models import IntegrationTable
@@ -22,8 +23,9 @@ from models import ResultTable
 from models import ScanTable
 from storages import Storage
 from utils.audit import get_audit_by_uuid
+from utils.scan import get_safe_url
 from utils.scan import get_scan_by_uuid
-from utils.scan import validate_target
+from utils.scan import validate_host
 
 from .authorizers import token_required
 from .parsers import Parser
@@ -234,7 +236,11 @@ class AuditScan(Resource):
         params = Parser.ScanPostRequest.parse_args()
 
         try:
-            validate_target(params["target"])
+            detector = dtm.load_detector(params["detection_module"], None)
+            if detector.TARGET_TYPE == DetectionTarget.HOST.name:
+                validate_host(params["target"])
+            elif detector.TARGET_TYPE == DetectionTarget.URL.name:
+                params["target"] = get_safe_url(params["target"])
         except Exception as e:
             abort(400, str(e))
 
@@ -284,8 +290,7 @@ class AuditIntegration(Resource):
         params = Parser.IntegrationPatchRequest.parse_args()
 
         try:
-            url = urlparse(params["url"])
-            validate_target(url.hostname)
+            params["url"] = get_safe_url(params["url"])
         except Exception as e:
             abort(400, str(e))
 

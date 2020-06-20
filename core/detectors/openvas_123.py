@@ -1,5 +1,6 @@
 from detectors import AbstractDetector
 from detectors import DetectionMode
+from detectors import DetectionTarget
 from detectors import ReleaseStage
 from detectors import Severity
 
@@ -9,6 +10,7 @@ class Detector(AbstractDetector):
     NAME = "OpenVAS"
     VERSION = "Version"
     SUPPORTED_MODE = [DetectionMode.UNSAFE.value]
+    TARGET_TYPE = DetectionTarget.HOST.value
     STAGE = ReleaseStage.DEPRECATED.value
     DESCRIPTION = "OpenVAS Description"
 

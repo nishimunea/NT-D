@@ -13,6 +13,7 @@ DetectorGetResponseSchema = api.model(
     {
         "module": fields.String(required=True),
         "supported_mode": fields.List(fields.String, required=True),
+        "target_type": fields.String(required=True),
         "stage": fields.String(required=True),
         "name": fields.String(required=True),
         "version": fields.String(required=True),
