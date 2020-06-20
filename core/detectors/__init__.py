@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import uuid
 from abc import ABCMeta
 from abc import abstractmethod
 from ast import literal_eval
@@ -10,8 +11,13 @@ from enum import Enum
 from enum import unique
 
 import requests
+from flask import current_app as app
 from kubernetes import config
 from kubernetes.client import Configuration
+from kubernetes.client.api import core_v1_api
+from kubernetes.stream import stream
+
+from utils import Utils
 
 kslogger = logging.getLogger("kubernetes")
 console_h = logging.StreamHandler()
@@ -116,13 +122,25 @@ class GKEConfiguration:
         Configuration.set_default(configuration)
 
 
-class AbstractDetector(metaclass=ABCMeta):
+class DetectorBase(metaclass=ABCMeta):
 
     NAME = "__name__"
     VERSION = "__version__"
-    SUPPORTED_MODE = [DetectionMode.UNSAFE.value]
+    SUPPORTED_MODE = []
+    TARGET_TYPE = "__target_type"
     STAGE = ReleaseStage.DEPRECATED.value
     DESCRIPTION = "__description__"
+
+    POD_NAME_PREFIX = "__pod_name_prefix__"
+    POD_NAMESPACE = "__pod_namespace__"
+    POD_RESOURCE_REQUEST = {}
+    POD_RESOURCE_LIMIT = {}
+
+    CONTAINER_IMAGE = "__container_image__"
+
+    CMD_RUN_SCAN = "echo run > out.txt"
+    CMD_CHECK_SCAN_STATUS = "ps x | wc -c"
+    CMD_GET_SCAN_RESULTS = "cat out.txt"
 
     @abstractmethod
     def __init__(self, session):
@@ -131,44 +149,117 @@ class AbstractDetector(metaclass=ABCMeta):
         except Exception:
             self.session = session
 
+        if Utils.is_gcp():
+            GKEConfiguration().set_config()
+        else:
+            LocalKubernetesConfiguration().set_config()
+        self.core_api = core_v1_api.CoreV1Api()
+
     @abstractmethod
     def create(self):
+        app.logger.info("Try to create detector: session={}".format(self.session))
+
+        pod_name = self.POD_NAME_PREFIX + "-" + uuid.uuid4().hex
+        resp = None
+        pod_manifest = {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {"name": pod_name},
+            "spec": {
+                "restartPolicy": "Never",
+                "containers": [
+                    {
+                        "image": self.CONTAINER_IMAGE,
+                        "image_pull_policy": "IfNotPresent",
+                        "name": self.POD_NAME_PREFIX,
+                        "command": ["sh", "-c", "while true;do date;sleep 5; done"],
+                        "resources": {
+                            "requests": self.POD_RESOURCE_REQUEST,
+                            "limits": self.POD_RESOURCE_LIMIT,
+                        },
+                    }
+                ],
+            },
+        }
+        resp = self.core_api.create_namespaced_pod(body=pod_manifest, namespace=self.POD_NAMESPACE)
+        app.logger.info("Created detector successfully: resp={}".format(resp))
+        self.session = {"pod": {"name": pod_name}}
         return self.session
 
     @abstractmethod
+    def delete(self):
+        app.logger.info("Try to delete detector: session={}".format(self.session))
+        try:
+            resp = self.core_api.delete_namespaced_pod(
+                name=self.session["pod"]["name"], body={}, namespace=self.POD_NAMESPACE
+            )
+            app.logger.info("Deleted detector successfully: resp={}".format(resp))
+        except Exception as error:
+            app.logger.error("Error on delete detector: {}".format(error))
+        return True
+
+    @abstractmethod
     def run(self, target, mode):
+        app.logger.info("Try to run scan: target={}, mode={}, session={}".format(target, mode, self.session))
+        resp = stream(
+            self.core_api.connect_get_namespaced_pod_exec,
+            self.session["pod"]["name"],
+            self.POD_NAMESPACE,
+            command=["/bin/sh", "-c", self.CMD_RUN_SCAN.format(target=target)],
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+        )
+        app.logger.info("Run detector successfully: resp={}".format(resp))
         return self.session
 
     @abstractmethod
     def is_ready(self):
-        return False
+        app.logger.info("Try to check detector is ready: session={}".format(self.session))
+        resp = self.core_api.read_namespaced_pod(
+            name=self.session["pod"]["name"], namespace=self.POD_NAMESPACE
+        )
+
+        app.logger.info("Checked detector is ready successfully: resp={}".format(resp))
+        if resp.status.phase != "Pending":
+            return True
+        else:
+            # TODO: Need to handle other phases, e.g., Running, Succeeded, Failed and Unknown
+            return False
 
     @abstractmethod
     def is_running(self):
-        return True
+        app.logger.info("Try to check detector is running: session={}".format(self.session))
+        resp = stream(
+            self.core_api.connect_get_namespaced_pod_exec,
+            self.session["pod"]["name"],
+            self.POD_NAMESPACE,
+            command=["/bin/sh", "-c", self.CMD_CHECK_SCAN_STATUS],
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+        )
+        app.logger.info("Checked detector is running successfully: resp={}".format(resp))
+        return int(resp) != 0
 
     @abstractmethod
     def get_results(self):
-        report = "__report__"
-        results = [
-            {
-                "host": "__host_1__",
-                "port": "__port_1__",
-                "name": "__name_1__",
-                "description": "__description_1__",
-            },
-            {
-                "host": "__host_2__",
-                "port": "__port_2__",
-                "name": "__name_2__",
-                "description": "__description_2__",
-            },
-        ]
+        app.logger.info("Try to get scan results: session={}".format(self.session))
+        report = stream(
+            self.core_api.connect_get_namespaced_pod_exec,
+            self.session["pod"]["name"],
+            self.POD_NAMESPACE,
+            command=["/bin/sh", "-c", self.CMD_GET_SCAN_RESULTS],
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+        )
+        results = []
+        app.logger.info("Got scan result successfully: report={}".format(report))
         return results, report
-
-    @abstractmethod
-    def delete(self):
-        return True
 
 
 dtm = DetectorManager()
