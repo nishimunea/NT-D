@@ -23,7 +23,7 @@ class Detector(DetectorBase):
 
     CONTAINER_IMAGE = "docker.io/wpscanteam/wpscan:latest"
 
-    CMD_RUN_SCAN = "nohup wpscan --url {target} --update --disable-tls-checks --rua -t 1 -e ap,at,tt,cb,dbe -f json -o /wpscan/out.json > /dev/null 2>&1 &"
+    CMD_RUN_SCAN = "wpscan --url {target} --update --disable-tls-checks --rua -t 200 -e ap,at,tt,cb,dbe -f json -o /wpscan/out.json > /dev/null 2>&1"
     CMD_CHECK_SCAN_STATUS = "ps x | grep wpscan | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat /wpscan/out.json"
 

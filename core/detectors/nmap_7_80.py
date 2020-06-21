@@ -43,7 +43,7 @@ class Detector(DetectorBase):
     CONTAINER_IMAGE = "docker.io/instrumentisto/nmap:7.80"
 
     # ToDo: Add -T2
-    CMD_RUN_SCAN = "nohup nmap -Pn -sC -sV -O -oX out.xml {target} > /dev/null 2>&1 &"
+    CMD_RUN_SCAN = "nmap -Pn -sC -sV -O -oX out.xml {target} > /dev/null 2>&1"
     CMD_CHECK_SCAN_STATUS = "ps x | grep nmap | grep -v grep | wc -c"
     CMD_GET_SCAN_RESULTS = "cat out.xml"
 

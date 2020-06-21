@@ -205,7 +205,11 @@ class DetectorBase(metaclass=ABCMeta):
             self.core_api.connect_get_namespaced_pod_exec,
             self.session["pod"]["name"],
             self.POD_NAMESPACE,
-            command=["/bin/sh", "-c", self.CMD_RUN_SCAN.format(target=target)],
+            command=[
+                "/bin/sh",
+                "-c",
+                "nohup {command} &".format(command=self.CMD_RUN_SCAN.format(target=target)),
+            ],
             stderr=True,
             stdin=False,
             stdout=True,

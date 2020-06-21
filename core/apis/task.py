@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 from flask import abort
+from flask import current_app as app
 from flask_restx import Namespace
 from flask_restx import Resource
 
@@ -31,7 +32,8 @@ class Task(Resource):
 
         try:
             tasks[task].poll()
-        except:
+        except Exception as error:
+            app.logger.error(error)
             abort(404)
 
         return True
