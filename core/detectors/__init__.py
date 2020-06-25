@@ -42,7 +42,6 @@ class DetectorManager:
         sys.path.pop(0)
 
         for dt in self.detectors:
-
             self.info.append(
                 {
                     "module": dt,
@@ -201,20 +200,8 @@ class DetectorBase(metaclass=ABCMeta):
     @abstractmethod
     def run(self, target, mode):
         app.logger.info("Try to run scan: target={}, mode={}, session={}".format(target, mode, self.session))
-        resp = stream(
-            self.core_api.connect_get_namespaced_pod_exec,
-            self.session["pod"]["name"],
-            self.POD_NAMESPACE,
-            command=[
-                "/bin/sh",
-                "-c",
-                "nohup {command} &".format(command=self.CMD_RUN_SCAN.format(target=target)),
-            ],
-            stderr=True,
-            stdin=False,
-            stdout=True,
-            tty=False,
-        )
+        command = "nohup {} &".format(self.CMD_RUN_SCAN.format(target=target))
+        resp = self._pod_exec(command)
         app.logger.info("Run detector successfully: resp={}".format(resp))
         return self.session
 
@@ -235,35 +222,29 @@ class DetectorBase(metaclass=ABCMeta):
     @abstractmethod
     def is_running(self):
         app.logger.info("Try to check detector is running: session={}".format(self.session))
-        resp = stream(
-            self.core_api.connect_get_namespaced_pod_exec,
-            self.session["pod"]["name"],
-            self.POD_NAMESPACE,
-            command=["/bin/sh", "-c", self.CMD_CHECK_SCAN_STATUS],
-            stderr=True,
-            stdin=False,
-            stdout=True,
-            tty=False,
-        )
+        resp = self._pod_exec(self.CMD_CHECK_SCAN_STATUS)
         app.logger.info("Checked detector is running successfully: resp={}".format(resp))
         return int(resp) != 0
 
     @abstractmethod
     def get_results(self):
         app.logger.info("Try to get scan results: session={}".format(self.session))
-        report = stream(
+        report = self._pod_exec(self.CMD_GET_SCAN_RESULTS)
+        results = []
+        app.logger.info("Got scan result successfully: report={}".format(report))
+        return results, report
+
+    def _pod_exec(self, command):
+        return stream(
             self.core_api.connect_get_namespaced_pod_exec,
             self.session["pod"]["name"],
             self.POD_NAMESPACE,
-            command=["/bin/sh", "-c", self.CMD_GET_SCAN_RESULTS],
+            command=["/bin/sh", "-c", command],
             stderr=True,
             stdin=False,
             stdout=True,
             tty=False,
         )
-        results = []
-        app.logger.info("Got scan result successfully: report={}".format(report))
-        return results, report
 
 
 dtm = DetectorManager()
