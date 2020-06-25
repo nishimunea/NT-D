@@ -267,12 +267,14 @@ export default {
       }
     },
     async getRawResult() {
-      const resp = await this.$http.get(`/scan/${this.currentScan.uuid}/download/`).catch(() => {
-        this.isError = true;
-      });
+      const resp = await this.$http
+        .get(`/scan/${this.currentScan.uuid}/download/`, { responseType: 'arraybuffer' })
+        .catch(() => {
+          this.isError = true;
+        });
       switch (resp.status) {
         case 200: {
-          const url = window.URL.createObjectURL(new Blob([resp.data]));
+          const url = window.URL.createObjectURL(new Blob([resp.data], { type: 'text/plain' }));
           const link = document.createElement('a');
           link.href = url;
           link.setAttribute('download', `${this.currentScan.uuid}.txt`);

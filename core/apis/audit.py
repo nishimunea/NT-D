@@ -237,10 +237,12 @@ class AuditScan(Resource):
 
         try:
             detector = dtm.load_detector(params["detection_module"], None)
-            if detector.TARGET_TYPE == DetectionTarget.HOST.name:
+            if detector.TARGET_TYPE == DetectionTarget.HOST.value:
                 validate_host(params["target"])
-            elif detector.TARGET_TYPE == DetectionTarget.URL.name:
+            elif detector.TARGET_TYPE == DetectionTarget.URL.value:
                 params["target"] = get_safe_url(params["target"])
+            else:
+                abort(400, "Specified detector has invalid target type")
         except Exception as e:
             abort(400, str(e))
 

@@ -1,3 +1,4 @@
+import json
 from ast import literal_eval
 
 from detectors import DetectionMode
@@ -69,4 +70,4 @@ class Detector(DetectorBase):
             resp = self._pod_exec(self.CMD_GET_ERROR_REASON)
             raise Exception(resp)
 
-        return results, report
+        return results, json.dumps(report)

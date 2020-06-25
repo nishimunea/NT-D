@@ -1,3 +1,4 @@
+import json
 from ast import literal_eval
 
 from detectors import DetectionMode
@@ -140,4 +141,4 @@ class Detector(DetectorBase):
                 {"host": url, "name": "Database exports", "description": url, "severity": Severity.HIGH.value}
             )
 
-        return results, report
+        return results, json.dumps(report)
