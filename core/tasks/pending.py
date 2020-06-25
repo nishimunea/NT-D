@@ -21,9 +21,9 @@ class PendingTaskHandler(TaskHandlerBase):
         app.logger.info("Try to enqueue into {}: scan={}".format(self.progress, scan))
         detector = dtm.load_detector(scan["detection_module"], None)
 
-        if detector.TARGET_TYPE == DetectionTarget.HOST.name:
+        if detector.TARGET_TYPE == DetectionTarget.HOST.value:
             validate_host(scan["target"])
-        elif detector.TARGET_TYPE == DetectionTarget.URL.name:
+        elif detector.TARGET_TYPE == DetectionTarget.URL.value:
             scan["target"] = get_safe_url(scan["target"])
 
         # Avoid concurrent scanning for the same target
