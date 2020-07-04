@@ -1,12 +1,8 @@
-import csv
 import os
 import secrets
-import tempfile
 import uuid
-from datetime import timedelta
 from http import HTTPStatus
 
-from flask import Response
 from flask import abort
 from flask import current_app as app
 from flask import g
@@ -32,9 +28,6 @@ from .parsers import Parser
 from .scan import ScanGetResponseSchema
 
 api = Namespace("audit")
-
-AUDIT_EXPORT_SCAN_RESULT_CSV_COLUMNS = ["host", "port", "name", "description"]
-AUDIT_EXPORT_RESPONSE_HEADERS = {"Content-Type": "text/csv", "Content-Disposition": "attachment"}
 
 IntegrationGetResponseSchema = api.model(
     "Integration Get Response", {"service": fields.String(required=True)}
@@ -122,6 +115,7 @@ class AuditList(Resource):
 
 @api.route("/<string:audit_uuid>/")
 @api.doc(security="API Token")
+@api.expect(Parser.AuditItemGetRequest)
 @api.response(200, HTTPStatus.OK.description)
 @api.response(400, HTTPStatus.BAD_REQUEST.description)
 @api.response(401, HTTPStatus.UNAUTHORIZED.description)
@@ -140,6 +134,14 @@ class AuditItem(Resource):
         audit["source_ip_address"] = os.getenv("NAT_EGRESS_IP", "127.0.0.1")
         audit["scans"] = audit_query[0].scans.dicts()
         audit["integrations"] = audit_query[0].integrations.dicts()
+
+        params = Parser.AuditItemGetRequest.parse_args()
+        if params["include_results"]:
+            scan_ids = list(map(lambda scan: scan["id"], audit["scans"]))
+            results = list(ResultTable.select(ResultTable).where(ResultTable.scan_id << scan_ids).dicts())
+            for scan in audit["scans"]:
+                scan["results"] = list(filter(lambda result: result["scan_id"] == scan["id"], results))
+
         return audit
 
     @api.expect(Parser.AuditPatchRequest)
@@ -167,53 +169,6 @@ class AuditItem(Resource):
         AuditTable.delete().where(AuditTable.uuid == audit_uuid).execute()
         Storage().delete(audit_uuid)
         return {}
-
-
-@api.route("/<string:audit_uuid>/export/")
-@api.doc(security="API Token")
-@api.expect(Parser.AuditExportGetRequest)
-@api.response(200, HTTPStatus.OK.description, headers=AUDIT_EXPORT_RESPONSE_HEADERS)
-@api.response(401, HTTPStatus.UNAUTHORIZED.description)
-@api.response(403, HTTPStatus.FORBIDDEN.description)
-@api.response(404, HTTPStatus.NOT_FOUND.description)
-class AuditExport(Resource):
-    @token_required()
-    def get(self, audit_uuid):
-
-        """
-        Export the specified audit information
-        """
-
-        params = Parser.AuditExportGetRequest.parse_args()
-
-        audit, audit_query = get_audit_by_uuid(audit_uuid)
-        output = audit["name"] + "\n" + audit["description"] + "\n\n"
-
-        scoped_scan_ids = []
-        for scan in audit_query[0].scans.dicts():
-            # Todo: この比較がスキャン完了を示す processed の代わりになるか確認
-            if scan["ended_at"] is not None:
-                scoped_scan_ids.append(scan["id"])
-
-        results = (
-            ResultTable.select(ResultTable, ScanTable)
-            .join(ScanTable)
-            .where(ResultTable.scan_id.in_(scoped_scan_ids))
-            .order_by(ResultTable.scan_id)
-        )
-
-        with tempfile.TemporaryFile("r+") as f:
-            writer = csv.DictWriter(f, AUDIT_EXPORT_SCAN_RESULT_CSV_COLUMNS, extrasaction="ignore")
-            writer.writeheader()
-            for result in results.dicts():
-                result["started_at"] = result["started_at"] + timedelta(minutes=params["tz_offset"])
-                result["ended_at"] = result["ended_at"] + timedelta(minutes=params["tz_offset"])
-                writer.writerow(result)
-            f.flush()
-            f.seek(0)
-            output += f.read()
-
-        return Response(response=output, status=200, headers=AUDIT_EXPORT_RESPONSE_HEADERS)
 
 
 @api.route("/<string:audit_uuid>/scan/")

@@ -32,12 +32,10 @@ class Parser:
         "description", type=inputs.regex("^.{,128}$"), default="", location="json"
     )
 
-    AuditPatchRequest = AuditListPostRequest
+    AuditItemGetRequest = reqparse.RequestParser()
+    AuditItemGetRequest.add_argument("include_results", type=inputs.boolean, default=False, location="args")
 
-    AuditExportGetRequest = reqparse.RequestParser()
-    AuditExportGetRequest.add_argument(
-        "tz_offset", type=inputs.int_range(-1440, 1440), default=0, location="args"
-    )
+    AuditPatchRequest = AuditListPostRequest
 
     # Scan
 
