@@ -4,7 +4,7 @@
 
 ## Local Debug
 
-Install [Minikube](https://kubernetes.io/ja/docs/tasks/tools/install-minikube/) on your computer and create a database pod as follows.
+Install and run [Minikube](https://kubernetes.io/ja/docs/tasks/tools/install-minikube/) on your computer and create a database pod as follows.
 
 ```
 kubectl run --generator=run-pod/v1 --image=mysql:5.7 ntd-database --port=3306 --env="MYSQL_DATABASE=ntd" --env="MYSQL_ROOT_PASSWORD=password" -- --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci

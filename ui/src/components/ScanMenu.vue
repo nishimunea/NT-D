@@ -26,7 +26,7 @@
           </v-list-item-content>
         </v-list-item>
 
-        <v-list-item>
+        <v-list-item @click="setReportComponent('AuditReportHtml')">
           <v-list-item-icon>
             <v-icon>get_app</v-icon>
           </v-list-item-icon>
@@ -48,18 +48,23 @@
       </v-list>
     </v-menu>
     <IntegrationSlackDialog v-model="isShownIntegrationSlackDialog" />
+    <div v-show="false">
+      <component v-bind:is="reportComponent" ref="report" v-on:loaded="downloadReport" />
+    </div>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions } from 'vuex';
 import IntegrationSlackDialog from '@/components/IntegrationSlackDialog.vue';
+import AuditReportHtml from '@/components/exports/AuditReportHtml.vue';
 
 export default {
   name: 'ScanMenu',
 
   components: {
     IntegrationSlackDialog,
+    AuditReportHtml,
   },
 
   computed: {
@@ -97,9 +102,24 @@ export default {
         }
       }
     },
+    downloadReport() {
+      const url = window.URL.createObjectURL(new Blob([this.$refs.report.$el.outerHTML], { type: 'text/html' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${this.currentAuditUUID}.html`);
+      document.body.appendChild(link);
+      link.click();
+    },
+    setReportComponent(component) {
+      this.reportComponent = undefined;
+      this.$nextTick(() => {
+        this.reportComponent = component;
+      });
+    },
   },
 
   data: () => ({
+    reportComponent: undefined,
     isShownIntegrationSlackDialog: false,
   }),
 };
