@@ -108,6 +108,7 @@ class Detector(DetectorBase):
         results.append(
             {
                 "host": address,
+                "port": None,
                 "name": "Hostnames",
                 "description": hostnames_desc.strip(),
                 "severity": Severity.INFO.value,
@@ -121,6 +122,7 @@ class Detector(DetectorBase):
         results.append(
             {
                 "host": address,
+                "port": None,
                 "name": "OS Detection",
                 "description": oses_desc.strip(),
                 "severity": Severity.INFO.value,
@@ -160,7 +162,7 @@ class Detector(DetectorBase):
                     results_script.append(
                         {
                             "host": address,
-                            "port": port_str,
+                            "port": portid,
                             "name": "{} ({})".format(script.get("id", ""), port_str),
                             "description": script.get("output", ""),
                             "severity": severity,
@@ -170,6 +172,7 @@ class Detector(DetectorBase):
         results.append(
             {
                 "host": address,
+                "port": None,
                 "name": "Open Ports",
                 "description": openports_desc.strip(),
                 "severity": openports_severity,
